@@ -5,26 +5,28 @@ import time
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 # Base URL and parameters
 
-# FO-FO = _DictionaryId=1
-
 # FO-EN = _DictionaryId=2
-#base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=2&_DictionaryPage=1&_SearchFor="
+#base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=2&_SearchFor="
 
 # EN-FO = _DictionaryId=3
-base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=3&_DictionaryPage=1&_SearchFor="
-search_terms = "aábdðcefghiíjklmnoópqrstuúvyýæøwxz"
-#search_terms = "a"
+# base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=3&_SearchFor="
+
+# FO-FO = _DictionaryId=1
+base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=1&_SearchFor="
 
 end_search = "&_l=fo&_Group="
+page_description = "&_DictionaryPage="
+page_number = 1
 
-
-def scrape_page(driver, search_term):
-    url = f"{base_url}{search_term}{end_search}"
+def scrape_page(driver, search_term, page_number):
+    url = f"{base_url}{search_term}{page_description}{page_number}"
     driver.get(url)
     time.sleep(2)  # Give the page time to load
 
@@ -36,9 +38,13 @@ def parse_page(html):
     if words_container:
         words = words_container.find_all("div", class_="dictionary-results--word-outer")
         for word in words:
-            title = word.find("div", class_="dictionary-results--word-title").get_text(strip=True)
-            description = word.find("div", class_="dictionary-results--word-description").get_text(strip=True)
-            yield title, description
+            title_elem = word.find("div", class_="dictionary-results--word-title")
+            description_elem = word.find("div", class_="dictionary-results--word-description")
+
+            if title_elem and description_elem:
+                title = title_elem.get_text(strip=True)
+                description = description_elem.get_text(strip=True)
+                yield title, description
 
 
 #for headless browser use this arguments
@@ -48,17 +54,34 @@ options.add_argument("--window-size=1920x1080")
 driver = webdriver.Chrome(options=options)
 
 # Starts up chrome
-#driver = webdriver.Chrome()  
+# driver = webdriver.Chrome()  
 
 search_terms = "aábdðcefghiíjklmnoópqrstuúvyýæøwxz"
-#search_terms = "a"
+# search_terms = "ghiíjklmnoópqrstuúvyýæøwxz"
+#search_terms = "q"
 
 try:
     for term in search_terms:
-        html = scrape_page(driver, term)
-        entries = parse_page(html)
-        with open(f"{term}_words.tsv", "w", encoding="utf-8") as file:
-            for title, description in entries:
-                file.write(f"{title}\t{description}\n")
+        with open(f"{term}_words_combined.tsv", "w", encoding="utf-8") as file:
+            page_number = 1
+            while True:
+                html = scrape_page(driver, term, page_number)
+                entries = parse_page(html)
+                for title, description in entries:
+                    file.write(f"{title}\t{description}\n")
+
+                # Check for next button using explicit wait
+                try:
+                    next_button = WebDriverWait(driver, 3).until(
+                        EC.presence_of_element_located((By.CLASS_NAME, "dictionary-results--pager-item--next"))
+                    )
+                    if "fal fa-angle-right" in next_button.get_attribute("class"):
+                        page_number += 1
+                        next_button.click()
+                        time.sleep(2)
+                    else:
+                        break
+                except:
+                    break  # Exit loop if the next button is not found within the timeout
 finally:
     driver.quit()
