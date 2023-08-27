@@ -1,0 +1,2 @@
+# Ordabok
+Orðabókin á terminalinum
