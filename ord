@@ -15,6 +15,7 @@ print_help() {
     echo "  -e    Search English to Faroese"
     echo "  -D    Search Faroese to Danish"
     echo "  -d    Search Danish to Faroese"
+    echo "  -n    Search Names in Faroese"
     echo "  -h    Display this help message"
     exit 1
 }
@@ -31,7 +32,7 @@ desc_search=false
 word_search=false
 
 # Parse options
-while getopts ":eEhdDraA" opt; do
+while getopts ":eEhdDraAn" opt; do
     case $opt in
         E)
             search_dir="fo-en"
@@ -53,6 +54,9 @@ while getopts ":eEhdDraA" opt; do
 	    ;;
 	A)
 	    desc_search=true
+	    ;;
+	n)
+	    search_dir="navn"
 	    ;;
         h)
             print_help
