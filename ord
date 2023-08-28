@@ -8,7 +8,7 @@ print_help() {
     echo "Usage: ord [OPTIONS] SEARCH_TERM"
     echo "Options:"
     echo "        Search Faroese to Faroese (default)"
-    echo "  -r    Search using regular expression"
+    echo "  -s    Search using regular expression"
     echo "  -a    Search all words"
     echo "  -A    Search all descriptions+words"
     echo "  -E    Search Faroese to English"
@@ -26,27 +26,39 @@ to_lowercase() {
 }
 
 # Default behavior is searching Faroese to Faroese
-search_dir="fo-fo"
+# Default search directories
+default_search_dirs=("fo-fo" "buskaparord" "samheitaordabok")
+search_dirs=("${default_search_dirs[@]}")
+#search_dir="fo-fo"
+
 regex_search=false
 desc_search=false
 word_search=false
 
 # Parse options
-while getopts ":eEhdDraAn" opt; do
+while getopts ":eEhdDsaAn" opt; do
     case $opt in
         E)
-            search_dir="fo-en"
+            search_dirs="fo-en"
+	    unset "search_dirs[1]"  # Exclude "buskaparord"
+            unset "search_dirs[2]"  # Exclude "samheitaordabok"
             ;;
         e)
-            search_dir="en-fo"
+            search_dirs="en-fo"
+	    unset "search_dirs[1]"  # Exclude "buskaparord"
+            unset "search_dirs[2]"  # Exclude "samheitaordabok"
             ;;
 	D)
-	    search_dir="fo-da"
+	    search_dirs="fo-da"
+	    unset "search_dirs[1]"  # Exclude "buskaparord"
+            unset "search_dirs[2]"  # Exclude "samheitaordabok"
 	    ;;
 	d)
-	    search_dir="da-fo"
+	    search_dirs="da-fo"
+	    unset "search_dirs[1]"  # Exclude "buskaparord"
+            unset "search_dirs[2]"  # Exclude "samheitaordabok"
 	    ;;
-	r)
+	s)
             regex_search=true
             ;;
 	a)
@@ -56,7 +68,9 @@ while getopts ":eEhdDraAn" opt; do
 	    desc_search=true
 	    ;;
 	n)
-	    search_dir="navn"
+	    search_dirs="navn"
+	    unset "search_dirs[1]"  # Exclude "buskaparord"
+            unset "search_dirs[2]"  # Exclude "samheitaordabok"
 	    ;;
         h)
             print_help
@@ -90,60 +104,71 @@ first_letter=$(echo "$search_term_lowercase" | cut -c 1)
 # Search the TSV file and print the description
 echo "Orðið leitað eftir: $1"
 
-description=$(grep -m 1 -i "^$search_term_lowercase" "$search_dir/${first_letter}_words_combined.tsv" | cut -f 2)
-words=$(cut -f 1 "$search_dir/${first_letter}_words_combined.tsv" | grep -i "^$search_term_lowercase")
 
 # Default search
-if [ -n "$description" ] && [ $regex_search = false ] ; then
-    # Split and print the description on separate lines
-	if echo "$description" | grep -q '[0-9]'; then
-		echo "$description" | awk -F'[0-9]' '{ for(i=2; i<=NF; i++) print "--------------------------------------------------\n" $i  }'
-	else
-		echo "$description"
-	fi
-	echo ""
-	print_separator
-	echo "Líknandi orð:"
-	echo $words
+if [ $regex_search = false ] && [ $word_search = false ] && [ $desc_search = false ] ; then
+
+	# Loop through the search directories
+	for search_dir in "${search_dirs[@]}"; do
+		description=$(grep -m 1 -i "^$search_term_lowercase" "$search_dir/${first_letter}_words_combined.tsv" | cut -f 2)
+		words=$(cut -f 1 "$search_dir/${first_letter}_words_combined.tsv" | grep -i "^$search_term_lowercase")
+
+		echo "Orðabók: $search_dir"
+	    	# Split and print the description on separate lines
+		if echo "$description" | grep -q '[0-9]'; then
+			echo "$description" | awk -F'[0-9]' '{ for(i=2; i<=NF; i++) print "--------------------------------------------------\n" $i  }'
+		else
+			echo "$description"
+		fi
+		echo ""
+		print_separator
+		echo "Líknandi orð: $search_dir"
+		echo $words
+	done
 fi
 
 # Option -[edEd] -r 
 if [ $desc_search = false ] && [ $regex_search = true ] ; then
 	# If regex search option is provided, perform regex search
-	if [ "$regex_search" = true ]; then
-		cut -f 1 "$search_dir/${first_letter}_words_combined.tsv" | grep -i -P "$search_term"
-	else
-	    echo "Word not found."
-	fi
+	# Loop through the search directories
+	for search_dir in "${search_dirs[@]}"; do
+		if [ "$regex_search" = true ]; then
+			cut -f 1 "$search_dir/${first_letter}_words_combined.tsv" | grep -i -P "$search_term"
+		else
+			echo "Einki orð funni"
+		fi
+	done
 fi
 
 # Option -[edEd] -a 
 if [ $desc_search = true ] && [ $regex_search = false ] ; then
-	# Iterate through all files and perform the search
-	for file in "$search_dir/"*_words_combined.tsv; do
-		# Search within descriptions
-		description=$(grep -i -P "$search_term" "$file" | cut -f 2)
-		col_word=$(grep -i -P "$search_term" "$file" | cut -f 1)
-		if [ -n "$description" ]; then
-			print_separator
-			echo "File: $file"
-			print_separator
-			echo "$col_word"
-	        fi
+	for search_dir in "${search_dirs[@]}"; do
+		# Iterate through all files and perform the search
+		echo "-------------  $search_dir  -----------------"
+		for file in "$search_dir/"*_words_combined.tsv; do
+			# Search within descriptions
+			description=$(grep -i -P "$search_term" "$file" | cut -f 2)
+			col_word=$(grep -i -P "$search_term" "$file" | cut -f 1)
+			if [ -n "$description" ]; then
+				print_separator
+				echo "$col_word"
+			fi
+		done
 	done
 fi
 
 # Option -[edEd] -A
 if [ $word_search = true ] && [ $regex_search = false ] ; then
-	# Iterate through all files and perform the search
-	for file in "$search_dir/"*_words_combined.tsv; do
-		# Search within descriptions
-		col_word=$(cut -f 1 $file | grep -i -P "$search_term")
-		if [ -n "$col_word" ]; then
-			print_separator
-			echo "File: $file"
-			print_separator
-			echo "$col_word"
-	        fi
+	for search_dir in "${search_dirs[@]}"; do
+		echo "-------------  $search_dir  -----------------"
+		# Iterate through all files and perform the search
+		for file in "$search_dir/"*_words_combined.tsv; do
+			# Search within descriptions
+			col_word=$(cut -f 1 $file | grep -i -P "$search_term")
+			if [ -n "$col_word" ]; then
+				print_separator
+				echo "$col_word"
+			fi
+		done
 	done
 fi
