@@ -9,7 +9,8 @@ print_help() {
     echo "Options:"
     echo "        Search Faroese to Faroese (default)"
     echo "  -r    Search using regular expression"
-    echo "  -a    Search all descriptions"
+    echo "  -a    Search all words"
+    echo "  -A    Search all descriptions+words"
     echo "  -E    Search Faroese to English"
     echo "  -e    Search English to Faroese"
     echo "  -D    Search Faroese to Danish"
@@ -27,9 +28,10 @@ to_lowercase() {
 search_dir="fo-fo"
 regex_search=false
 desc_search=false
+word_search=false
 
 # Parse options
-while getopts ":eEhdra" opt; do
+while getopts ":eEhdDraA" opt; do
     case $opt in
         E)
             search_dir="fo-en"
@@ -37,6 +39,9 @@ while getopts ":eEhdra" opt; do
         e)
             search_dir="en-fo"
             ;;
+	D)
+	    search_dir="fo-da"
+	    ;;
 	d)
 	    search_dir="da-fo"
 	    ;;
@@ -44,6 +49,9 @@ while getopts ":eEhdra" opt; do
             regex_search=true
             ;;
 	a)
+	    word_search=true
+	    ;;
+	A)
 	    desc_search=true
 	    ;;
         h)
@@ -76,33 +84,58 @@ search_term_lowercase=$(to_lowercase "$search_term")
 first_letter=$(echo "$search_term_lowercase" | cut -c 1)
 
 # Search the TSV file and print the description
-echo "Orðið: $1"
+echo "Orðið leitað eftir: $1"
 
-if [ $desc_search = false ] ; then
+description=$(grep -m 1 -i "^$search_term_lowercase" "$search_dir/${first_letter}_words_combined.tsv" | cut -f 2)
+words=$(cut -f 1 "$search_dir/${first_letter}_words_combined.tsv" | grep -i "^$search_term_lowercase")
 
-	description=$(grep -m 1 -i "^$search_term_lowercase" "$search_dir/${first_letter}_words_combined.tsv" | cut -f 2)
-
-	if [ -n "$description" ]; then
-	    # If regex search option is provided, perform regex search
-	    if [ "$regex_search" = true ]; then
-		cut -f 1 "$search_dir/${first_letter}_words_combined.tsv" | grep -i "$search_term"
-	    fi
-	    # Split and print the description on separate lines
-	    if echo "$description" | grep -q '[0-9]'; then
-		echo "$description" | awk -F'[0-9]' '{ for(i=2; i<=NF; i++) print $i "\n---" }'
-	    else
+# Default search
+if [ -n "$description" ] && [ $regex_search = false ] ; then
+    # Split and print the description on separate lines
+	if echo "$description" | grep -q '[0-9]'; then
+		echo "$description" | awk -F'[0-9]' '{ for(i=2; i<=NF; i++) print "--------------------------------------------------\n" $i  }'
+	else
 		echo "$description"
-	    fi
+	fi
+	echo ""
+	print_separator
+	echo "Líknandi orð:"
+	echo $words
+fi
+
+# Option -[edEd] -r 
+if [ $desc_search = false ] && [ $regex_search = true ] ; then
+	# If regex search option is provided, perform regex search
+	if [ "$regex_search" = true ]; then
+		cut -f 1 "$search_dir/${first_letter}_words_combined.tsv" | grep -i -P "$search_term"
 	else
 	    echo "Word not found."
 	fi
-else
+fi
+
+# Option -[edEd] -a 
+if [ $desc_search = true ] && [ $regex_search = false ] ; then
 	# Iterate through all files and perform the search
 	for file in "$search_dir/"*_words_combined.tsv; do
 		# Search within descriptions
-		description=$(grep -i "$search_term" "$file" | cut -f 2)
-		col_word=$(grep -i "$search_term" "$file" | cut -f 1)
+		description=$(grep -i -P "$search_term" "$file" | cut -f 2)
+		col_word=$(grep -i -P "$search_term" "$file" | cut -f 1)
 		if [ -n "$description" ]; then
+			print_separator
+			echo "File: $file"
+			print_separator
+			echo "$col_word"
+	        fi
+	done
+fi
+
+# Option -[edEd] -A
+if [ $word_search = true ] && [ $regex_search = false ] ; then
+	# Iterate through all files and perform the search
+	for file in "$search_dir/"*_words_combined.tsv; do
+		# Search within descriptions
+		col_word=$(cut -f 1 $file | grep -i -P "$search_term")
+		if [ -n "$col_word" ]; then
 			print_separator
 			echo "File: $file"
 			print_separator

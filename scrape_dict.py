@@ -25,11 +25,16 @@ from selenium.webdriver.support import expected_conditions as EC
 # base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=5&_SearchFor="
 
 # FO-DA = _DictionaryId=4
-base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=4&_SearchFor="
+# base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=4&_SearchFor="
 
 # Búsk = _DictionaryId=32
 # base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=32&_SearchFor="
 
+# Nøvn = _DictionaryId=32
+# base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=25&_SearchFor="
+
+# Samheitaorðabók = _DictionaryId=32
+base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=15&_SearchFor="
 end_search = "&_l=fo&_Group="
 page_description = "&_DictionaryPage="
 page_number = 1

@@ -20,14 +20,15 @@ fi
 ######################## ord -e #########################################
 #########################################################################
 function test_a_option(){
-local result=$(ord -e baby)
+local result=$(ord koma)
 local expected
-local command="ord -e baby"
+local command="ord koma"
 read -r -d '' expected <<- EOF
-<<insert text here>>
+Orðið: koma
+tað at koma, koming,tíðindini um komu hansara;sms. t.d.aftur-,and-,at-,fram-,heim-,í-,land-,sam-
 EOF
 assertEQ "$result" "$expected" "$command"
-echo "$result"
-echo "$expected"
+#echo "$result"
+#echo "$expected"
 }
 test_a_option
