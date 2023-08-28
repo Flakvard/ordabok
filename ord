@@ -9,6 +9,7 @@ print_help() {
     echo "Options:"
     echo "        Search Faroese to Faroese (default)"
     echo "  -r    Search using regular expression"
+    echo "  -a    Search all descriptions"
     echo "  -E    Search Faroese to English"
     echo "  -e    Search English to Faroese"
     echo "  -D    Search Faroese to Danish"
@@ -64,6 +65,11 @@ if [ -z "$1" ]; then
     print_help
 fi
 
+# Function to print a separator line
+print_separator() {
+    echo "--------------------------------------------------"
+}
+
 # Convert the search term to lowercase and extract the first letter
 search_term="$1"
 search_term_lowercase=$(to_lowercase "$search_term")
@@ -79,9 +85,10 @@ if [ $desc_search = false ] ; then
 	if [ -n "$description" ]; then
 	    # If regex search option is provided, perform regex search
 	    if [ "$regex_search" = true ]; then
-		grep -i "$search_term" "$search_dir/${first_letter}_words_combined.tsv"
+		cut -f 1 "$search_dir/${first_letter}_words_combined.tsv" | grep -i "$search_term"
+	    fi
 	    # Split and print the description on separate lines
-	    elif echo "$description" | grep -q '[0-9]'; then
+	    if echo "$description" | grep -q '[0-9]'; then
 		echo "$description" | awk -F'[0-9]' '{ for(i=2; i<=NF; i++) print $i "\n---" }'
 	    else
 		echo "$description"
@@ -91,13 +98,15 @@ if [ $desc_search = false ] ; then
 	fi
 else
 	# Iterate through all files and perform the search
-	for file in "$search_dir/"[A-Z]_words_combined.tsv; do
-	    if [ "$desc_search" = true ]; then
+	for file in "$search_dir/"*_words_combined.tsv; do
 		# Search within descriptions
-		grep -i "$search_term" "$file" | cut -f 2
-	    else
-		# Default behavior (search within first column)
-		grep -i "^$search_term_lowercase" "$file" | cut -f 2
-	    fi
+		description=$(grep -i "$search_term" "$file" | cut -f 2)
+		col_word=$(grep -i "$search_term" "$file" | cut -f 1)
+		if [ -n "$description" ]; then
+			print_separator
+			echo "File: $file"
+			print_separator
+			echo "$col_word"
+	        fi
 	done
 fi
