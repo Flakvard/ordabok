@@ -37,7 +37,10 @@ from selenium.webdriver.support import expected_conditions as EC
 # base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=15&_SearchFor="
 
 # Yrkisorðabók = _DictionaryId=32
-base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=13&_SearchFor="
+#base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=13&_SearchFor="
+
+# RU-FØ = _DictionaryId=32
+base_url = "https://sprotin.fo/dictionaries?_SearchInflections=0&_SearchDescriptions=0&_DictionaryId=12&_SearchFor="
 
 end_search = "&_l=fo&_Group="
 page_description = "&_DictionaryPage="
@@ -74,7 +77,10 @@ driver = webdriver.Chrome(options=options)
 # Starts up chrome
 # driver = webdriver.Chrome()  
 
-search_terms = "aábdðcefghiíjklmnoópqrstuúvyýæøwxz"
+#search_terms = "aábdðcefghiíjklmnoópqrstuúvyýæøwxz"
+# Russian
+#search_terms = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
+search_terms = "ТУФХЦЧШЩЪЫЬЭЮЯ"
 # search_terms = "ghiíjklmnoópqrstuúvyýæøwxz"
 #search_terms = "q"
 
