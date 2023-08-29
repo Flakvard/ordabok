@@ -186,12 +186,8 @@ if [ $desc_search = true ] && [ $word_search = false ] && [ $regex_search = fals
 						echo "$desc"
 					  done <<< "$ruDescription"
 				else
-					#print_separator
-					#echo "$description"
-					for desc in ${description[@]}; do
-						print_separator
-						echo "$desc"
-					done
+					print_separator
+					echo "$description"
 				fi
 			fi
 		done
