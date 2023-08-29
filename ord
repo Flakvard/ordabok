@@ -15,6 +15,7 @@ print_help() {
     echo "  -e    Search English to Faroese"
     echo "  -D    Search Faroese to Danish"
     echo "  -d    Search Danish to Faroese"
+    echo "  -r    Search Russian to Faroese"
     echo "  -n    Search Names in Faroese"
     echo "  -h    Display this help message"
     exit 1
@@ -36,7 +37,7 @@ desc_search=false
 word_search=false
 
 # Parse options
-while getopts ":eEhdDsaAn" opt; do
+while getopts ":eEhdDsaAnr" opt; do
     case $opt in
         E)
             search_dirs="fo-en"
@@ -70,6 +71,12 @@ while getopts ":eEhdDsaAn" opt; do
 	    ;;
 	A)
 	    desc_search=true
+	    ;;
+	r)
+	    search_dirs="ru-fo"
+	    unset "search_dirs[1]"  # Exclude "buskaparord"
+            unset "search_dirs[2]"  # Exclude "samheitaordabok"
+            unset "search_dirs[3]"  # Exclude "yrkordabok"
 	    ;;
 	n)
 	    search_dirs="navn"
@@ -146,16 +153,15 @@ if [ $desc_search = false ] && [ $regex_search = true ] ; then
 	done
 fi
 
-# Option -[edEd] -a 
-if [ $desc_search = true ] && [ $regex_search = false ] ; then
+# Option -[eEdDr] -a 
+if [ $word_search = true ] && [ $desc_search = false ] && [ $regex_search = false ] ; then
 	for search_dir in "${search_dirs[@]}"; do
 		# Iterate through all files and perform the search
 		echo "-------------  $search_dir  -----------------"
 		for file in "$search_dir/"*_words_combined.tsv; do
-			# Search within descriptions
-			description=$(grep -i -P "$search_term" "$file" | cut -f 2)
-			col_word=$(grep -i -P "$search_term" "$file" | cut -f 1)
-			if [ -n "$description" ]; then
+			# Search all the alphabet for the word
+			col_word=$(cut -f 1 $file | grep -i -P "$search_term")
+			if [ -n "$col_word" ]; then
 				print_separator
 				echo "$col_word"
 			fi
@@ -163,17 +169,30 @@ if [ $desc_search = true ] && [ $regex_search = false ] ; then
 	done
 fi
 
-# Option -[edEd] -A
-if [ $word_search = true ] && [ $regex_search = false ] ; then
+# Option -[eEdDr] -A
+if [ $desc_search = true ] && [ $word_search = false ] && [ $regex_search = false ] ; then
 	for search_dir in "${search_dirs[@]}"; do
 		echo "-------------  $search_dir  -----------------"
 		# Iterate through all files and perform the search
 		for file in "$search_dir/"*_words_combined.tsv; do
 			# Search within descriptions
-			col_word=$(cut -f 1 $file | grep -i -P "$search_term")
-			if [ -n "$col_word" ]; then
-				print_separator
-				echo "$col_word"
+			description=$(grep -i -P "$search_term" "$file" | cut -f 1) 
+			if [ -n "$description" ]; then
+				# Display extra information
+				if [ $search_dir = "ru-fo" ] ; then
+					  ruDescription=$(grep -i -P "$search_term" "$file")
+					  while IFS= read -r desc; do
+						print_separator
+						echo "$desc"
+					  done <<< "$ruDescription"
+				else
+					#print_separator
+					#echo "$description"
+					for desc in ${description[@]}; do
+						print_separator
+						echo "$desc"
+					done
+				fi
 			fi
 		done
 	done
