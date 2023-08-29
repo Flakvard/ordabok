@@ -27,7 +27,7 @@ to_lowercase() {
 
 # Default behavior is searching Faroese to Faroese
 # Default search directories
-default_search_dirs=("fo-fo" "buskaparord" "samheitaordabok")
+default_search_dirs=("fo-fo" "buskaparord" "samheitaordabok" "yrkordabok")
 search_dirs=("${default_search_dirs[@]}")
 #search_dir="fo-fo"
 
@@ -42,21 +42,25 @@ while getopts ":eEhdDsaAn" opt; do
             search_dirs="fo-en"
 	    unset "search_dirs[1]"  # Exclude "buskaparord"
             unset "search_dirs[2]"  # Exclude "samheitaordabok"
+            unset "search_dirs[3]"  # Exclude "yrkordabok"
             ;;
         e)
             search_dirs="en-fo"
 	    unset "search_dirs[1]"  # Exclude "buskaparord"
             unset "search_dirs[2]"  # Exclude "samheitaordabok"
+            unset "search_dirs[3]"  # Exclude "yrkordabok"
             ;;
 	D)
 	    search_dirs="fo-da"
 	    unset "search_dirs[1]"  # Exclude "buskaparord"
             unset "search_dirs[2]"  # Exclude "samheitaordabok"
+            unset "search_dirs[3]"  # Exclude "yrkordabok"
 	    ;;
 	d)
 	    search_dirs="da-fo"
 	    unset "search_dirs[1]"  # Exclude "buskaparord"
             unset "search_dirs[2]"  # Exclude "samheitaordabok"
+            unset "search_dirs[3]"  # Exclude "yrkordabok"
 	    ;;
 	s)
             regex_search=true
@@ -71,6 +75,7 @@ while getopts ":eEhdDsaAn" opt; do
 	    search_dirs="navn"
 	    unset "search_dirs[1]"  # Exclude "buskaparord"
             unset "search_dirs[2]"  # Exclude "samheitaordabok"
+            unset "search_dirs[3]"  # Exclude "yrkordabok"
 	    ;;
         h)
             print_help
@@ -113,17 +118,18 @@ if [ $regex_search = false ] && [ $word_search = false ] && [ $desc_search = fal
 		description=$(grep -m 1 -i "^$search_term_lowercase" "$search_dir/${first_letter}_words_combined.tsv" | cut -f 2)
 		words=$(cut -f 1 "$search_dir/${first_letter}_words_combined.tsv" | grep -i "^$search_term_lowercase")
 
-		echo "Orðabók: $search_dir"
+		echo "-------------  $search_dir  -----------------"
 	    	# Split and print the description on separate lines
 		if echo "$description" | grep -q '[0-9]'; then
 			echo "$description" | awk -F'[0-9]' '{ for(i=2; i<=NF; i++) print "--------------------------------------------------\n" $i  }'
 		else
 			echo "$description"
 		fi
-		echo ""
 		print_separator
 		echo "Líknandi orð: $search_dir"
 		echo $words
+		print_separator
+		echo ""
 	done
 fi
 
