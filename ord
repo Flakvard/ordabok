@@ -110,8 +110,13 @@ print_separator() {
 
 # Convert the search term to lowercase and extract the first letter
 search_term="$1"
+
 search_term_lowercase=$(to_lowercase "$search_term")
-first_letter=$(echo "$search_term_lowercase" | cut -c 1)
+
+# Get the first letter from the lowercase search term
+first_letter="${search_term_lowercase:0:1}"
+
+
 
 # Search the TSV file and print the description
 echo "Orðið leitað eftir: $1"
@@ -122,6 +127,7 @@ if [ $regex_search = false ] && [ $word_search = false ] && [ $desc_search = fal
 
 	# Loop through the search directories
 	for search_dir in "${search_dirs[@]}"; do
+
 		description=$(grep -m 1 -i "^$search_term_lowercase" "$search_dir/${first_letter}_words_combined.tsv" | cut -f 2)
 		words=$(cut -f 1 "$search_dir/${first_letter}_words_combined.tsv" | grep -i "^$search_term_lowercase")
 

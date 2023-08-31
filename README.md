@@ -51,3 +51,11 @@ ord -n hørður # bending av Hørði = Hørð, Hørði, Haðar
 ord -Ea vápn # gevur nógv sum td. = vælvápnaður, álopsvápn, óvápnaður
 ord -Ea vápn # sama sum -a og meira td. óskaðiligur, ótti, royndarspreinging, ragnarøk
 ```
+### Leita ru-fo
+Virkar ikki heilt, tí orðini eru ikki formatera ordiligt
+```bash
+ord -r Привет # virkar tíanverri IKKI
+ord -rs При # virkar og finnur øll orð við hesari byrjan
+ord -ra рив # finnur øll orð við рив í sær
+ord -rA matur # finnur øll orð við mat í sær
+```
